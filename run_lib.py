@@ -75,7 +75,7 @@ def train(config, workdir):
                        model_state=init_model_state,
                        ema_rate=config.model.ema_rate,
                        params_ema=initial_params,
-                       rng=rng)  # pytype: disable=wrong-keyword-args # TODO
+                       rng=rng)  # pytype: disable=wrong-keyword-args
 
   # Create checkpoints directory
   checkpoint_dir = os.path.join(workdir, "checkpoints")
