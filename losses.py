@@ -17,6 +17,7 @@
 """
 
 import flax
+import optax
 import jax
 import jax.numpy as jnp
 import jax.random as random
@@ -53,7 +54,7 @@ def optimization_manager(config):
       grad_norm = jnp.sqrt(
         sum([jnp.sum(jnp.square(x)) for x in jax.tree_leaves(grad)]))
       # Clip gradient
-      clipped_grad = jax.tree_map(
+      clipped_grad = jax.tree_util.tree_map(
         lambda x: x * grad_clip / jnp.maximum(grad_norm, grad_clip), grad)
     else:  # disabling gradient clipping if grad_clip < 0
       clipped_grad = grad
@@ -222,13 +223,13 @@ def get_step_fn(sde, model, train, optimize_fn=None, reduce_mean=False, continuo
     (rng, state) = carry_state
     rng, step_rng = jax.random.split(rng)
     grad_fn = jax.value_and_grad(loss_fn, argnums=1, has_aux=True)
-    if train:
+    if train: # TODO: flax.optim version
       params = state.optimizer.target
       states = state.model_state
       (loss, new_model_state), grad = grad_fn(step_rng, params, states, batch)
       grad = jax.lax.pmean(grad, axis_name='batch')
       new_optimizer = optimize_fn(state, grad)
-      new_params_ema = jax.tree_multimap(
+      new_params_ema = jax.tree_util.tree_map(
         lambda p_ema, p: p_ema * state.ema_rate + p * (1. - state.ema_rate),
         state.params_ema, new_optimizer.target
       )
